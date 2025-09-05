@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Specifications</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.3/swagger-ui.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="header">
+        <h1>API Specifications</h1>
+        <p>Browse and explore your OpenAPI specifications</p>
+    </div>
+
+    <div class="container">
+        <div class="spec-selector">
+            <h2>Available Specifications</h2>
+            <div id="spec-list" class="loading">Loading specifications...</div>
+            <button class="refresh-btn" onclick="loadSpecs()">Refresh</button>
+        </div>
+
+        <div id="swagger-ui"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.3/swagger-ui-bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.3/swagger-ui-standalone-preset.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
