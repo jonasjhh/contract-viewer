@@ -1,20 +1,13 @@
-let currentSpecs = [];
 let ui = null;
 
 const CONFIG = {
-    autoLoadFirstSpec: true,
     ui: {
-        title: 'API Specifications',
-        subtitle: 'Browse and explore your OpenAPI specifications',
-        loadingText: 'Loading specifications...',
-        noSpecsTitle: 'No specifications found',
-        noSpecsMessage: 'No spec files found. Add .yaml, .yml, or .json files to the specs directory and rebuild.'
+        title: 'API Specifications'
     },
     swaggerUI: {
         deepLinking: true,
         layout: "StandaloneLayout",
-        tryItOutEnabled: true,
-        showRequestHeaders: true
+        tryItOutEnabled: true
     }
 };
 
@@ -22,99 +15,29 @@ function initializePage() {
     document.title = CONFIG.ui.title;
 }
 
-async function loadSpecs() {
-    const specList = document.getElementById('spec-list');
-    specList.innerHTML = `<div class="loading">${CONFIG.ui.loadingText}</div>`;
-
+async function initializeSwaggerUIWithSpecs() {
     try {
-        // Check if auto-generated specs config exists
+        // Check if specs config exists
         if (typeof window.SPECS_CONFIG === 'undefined' || window.SPECS_CONFIG.length === 0) {
-            specList.innerHTML = `
+            document.getElementById('swagger-ui').innerHTML = `
                 <div class="no-specs">
-                    <h3>${CONFIG.ui.noSpecsTitle}</h3>
-                    <p>${CONFIG.ui.noSpecsMessage}</p>
+                    <h3>No specifications found</h3>
+                    <p>No spec files found. Add .yaml, .yml, or .json files to the specs directory and rebuild.</p>
                 </div>
             `;
             return;
         }
 
-        currentSpecs = window.SPECS_CONFIG;
-        renderSpecList(currentSpecs);
+        // Convert specs to Swagger UI format
+        const urls = window.SPECS_CONFIG.map(spec => ({
+            url: spec.path,
+            name: spec.displayName
+        }));
 
-        // Auto-load the first spec if configured to do so
-        if (CONFIG.autoLoadFirstSpec && currentSpecs.length > 0) {
-            loadSpec(currentSpecs[0].path);
-        }
-
-    } catch (error) {
-        console.error('Error loading specs:', error);
-        specList.innerHTML = `
-            <div class="error">
-                <strong>Error loading specifications:</strong><br>
-                ${error.message}
-            </div>
-        `;
-    }
-}
-
-function renderSpecList(specs) {
-    const specList = document.getElementById('spec-list');
-
-    if (specs.length === 0) {
-        specList.innerHTML = `
-            <div class="no-specs">
-                <h3>${CONFIG.ui.noSpecsTitle}</h3>
-                <p>${CONFIG.ui.noSpecsMessage}</p>
-            </div>
-        `;
-        return;
-    }
-
-    const grid = document.createElement('div');
-    grid.className = 'spec-grid';
-
-    specs.forEach((spec) => {
-        const card = document.createElement('div');
-        card.className = 'spec-card';
-        card.onclick = () => loadSpec(spec.path);
-
-        card.innerHTML = `
-            <div class="spec-name">${spec.displayName}</div>
-            <div class="spec-path">${spec.filename}</div>
-        `;
-
-        grid.appendChild(card);
-    });
-
-    specList.innerHTML = '';
-    specList.appendChild(grid);
-}
-
-async function loadSpec(specPath) {
-    // Update active card
-    document.querySelectorAll('.spec-card').forEach(card => {
-        card.classList.remove('active');
-    });
-
-    // Find and highlight the active card
-    const activeCard = Array.from(document.querySelectorAll('.spec-card')).find(card => {
-        const pathText = card.querySelector('.spec-path').textContent;
-        return specPath.endsWith(pathText);
-    });
-
-    if (activeCard) {
-        activeCard.classList.add('active');
-    }
-
-    try {
-        if (ui) {
-            ui = null;
-        }
-
-        document.getElementById('swagger-ui').innerHTML = '<div class="loading">Loading specification...</div>';
-
+        // Initialize Swagger UI with built-in selector
         ui = SwaggerUIBundle({
-            url: specPath,
+            urls: urls,
+            "urls.primaryName": urls[0]?.name,
             dom_id: '#swagger-ui',
             deepLinking: CONFIG.swaggerUI.deepLinking,
             presets: [
@@ -127,15 +50,14 @@ async function loadSpec(specPath) {
             layout: CONFIG.swaggerUI.layout,
             tryItOutEnabled: CONFIG.swaggerUI.tryItOutEnabled,
             onComplete: () => {
-                console.log('Swagger UI loaded successfully');
+                console.log('Swagger UI loaded with', urls.length, 'specs');
             },
             onFailure: (error) => {
                 console.error('Swagger UI failed to load:', error);
                 document.getElementById('swagger-ui').innerHTML = `
                     <div class="error">
-                        <strong>Error loading specification:</strong><br>
-                        ${error.message || 'Unknown error occurred'}<br><br>
-                        Make sure the file exists and is a valid OpenAPI specification.
+                        <strong>Error loading specifications:</strong><br>
+                        ${error.message || 'Unknown error occurred'}
                     </div>
                 `;
             }
@@ -145,7 +67,7 @@ async function loadSpec(specPath) {
         console.error('Error initializing Swagger UI:', error);
         document.getElementById('swagger-ui').innerHTML = `
             <div class="error">
-                <strong>Error loading specification:</strong><br>
+                <strong>Error loading specifications:</strong><br>
                 ${error.message}
             </div>
         `;
@@ -154,5 +76,5 @@ async function loadSpec(specPath) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initializePage();
-    loadSpecs();
+    initializeSwaggerUIWithSpecs();
 });
